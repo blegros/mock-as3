@@ -1,5 +1,7 @@
 package com.anywebcam.mock.runner
 {
+	import asx.array.compact;
+	
 	import com.anywebcam.mock.MockExpectationError;
 	import com.anywebcam.mock.Mockery;
 	
@@ -25,19 +27,17 @@ package com.anywebcam.mock.runner
 		}
 		
 		public function evaluate(parentToken : AsyncTestToken) : void {
-			if (method.getSpecificMetaDataArg("Test", "verify") == "false") {
-                //trace("[mock-as3] Skipping mock verification for " + method.name + ".");
+			if (method.getSpecificMetaDataArgValue("Test", "verify") == "false") {
 				parentToken.sendResult(null);
 				return;
 			}
 			
 			//iterate over all properties and call verify
-			var mocksToVerify : Array = propertyNames.map(function(property : String, index : int, source : Array) : Object {
+			var mocksToVerify : Array = compact(propertyNames.map(function(property : String, index : int, source : Array) : Object {
 					return target[property];
-				});
+				}));
 			
 			try {
-				//trace("[mock-as3] Verifying expectations...", mocksToVerify.join(', '));
 				mockery.verify(mocksToVerify);
 			}
 			catch(mee : MockExpectationError) {

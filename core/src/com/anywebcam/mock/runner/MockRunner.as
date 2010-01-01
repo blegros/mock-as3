@@ -3,20 +3,22 @@ package com.anywebcam.mock.runner
     import asx.array.*;
     import asx.string.*;
     
-	import com.anywebcam.mock.Mockery;
-	
-	import flash.utils.Dictionary;
-	
-	import flex.lang.reflect.Field;
-	import flex.lang.reflect.Klass;
-	
-	import org.flexunit.internals.runners.InitializationError;
-	import org.flexunit.internals.runners.statements.Fail;
-	import org.flexunit.internals.runners.statements.IAsyncStatement;
-	import org.flexunit.internals.runners.statements.StatementSequencer;
-	import org.flexunit.runner.notification.IRunNotifier;
-	import org.flexunit.runners.BlockFlexUnit4ClassRunner;
-	import org.flexunit.runners.model.FrameworkMethod;
+    import com.anywebcam.mock.Mockery;
+    
+    import flash.utils.Dictionary;
+    
+    import flex.lang.reflect.Field;
+    import flex.lang.reflect.Klass;
+    
+    import org.flexunit.internals.runners.InitializationError;
+    import org.flexunit.internals.runners.statements.Fail;
+    import org.flexunit.internals.runners.statements.IAsyncStatement;
+    import org.flexunit.internals.runners.statements.RunAfters;
+    import org.flexunit.internals.runners.statements.RunBefores;
+    import org.flexunit.internals.runners.statements.RunBeforesClass;
+    import org.flexunit.internals.runners.statements.StatementSequencer;
+    import org.flexunit.runners.BlockFlexUnit4ClassRunner;
+    import org.flexunit.runners.model.FrameworkMethod;
 	
 	public class MockRunner extends BlockFlexUnit4ClassRunner
 	{
@@ -33,8 +35,6 @@ package com.anywebcam.mock.runner
 			this.mockery = new Mockery();
 			this.mockeryFieldName = findMockeryField(testClass);
 			this.propertyNamesToInject = findMocksToPrepareAndInject(testClass);
-			
-            //trace("[mock-as3] MockRunner created for " + testClass.toString());
 		}
 
 		/**
@@ -65,12 +65,24 @@ package com.anywebcam.mock.runner
 			
 			for each (var field : Field in klass.fields) {
 				if (field.hasMetaData("Mock")) {
-					var mockType : String = field.getMetaData("Mock", "type") || "nice";
+					var mockType : String = "nice";
+					
+					if(field.getMetaData("Mock").hasArgument("type"))
+					{
+						mockType = field.getMetaData("Mock").getArgument("type").value; 
+					}
+					
 					if (!contains(["nice", "strict"], mockType)) {
 						throw new InitializationError(substitute("Property '{}' must declare a mock type of either 'nice' or 'strict'; '{}' is NOT a valid type.", field.name, mockType));						
 					} 
 					
-					var injectable : String = field.getMetaData("Mock", "inject") || "true";
+					var injectable : String = "true";
+					
+					if(field.getMetaData("Mock").hasArgument("inject"))
+					{
+						injectable = field.getMetaData("Mock").getArgument("inject").value;
+					}
+					
 					if (!contains(["true", "false"], injectable)) {
 						throw new InitializationError(substitute( "Property '{}' must declare the attribute inject as either 'true' or 'false'; '{}' is NOT valid.", field.name, injectable));
 					}
@@ -88,8 +100,6 @@ package com.anywebcam.mock.runner
 					property["type"] = mockType;
 					property["inject"] = (injectable == "true");
 					
-                    //trace(substitute("[mock-as3] mock property:{} klass:{} type:{} inject:{}", field.name, field.type, mockType, injectable));
-					
 					injectionConfig.push(property);
 				}
 			}
@@ -97,55 +107,54 @@ package com.anywebcam.mock.runner
 			return injectionConfig; 
 		}
 		
-		/**
-		 * Overriden from parent to implement hook to run mock preparation before [BeforeClass] 
-		 */
-		protected override function classBlock(notifier : IRunNotifier) : IAsyncStatement {
-			//build array of all class types to prepare
-			var classes : Array = compact(unique(pluck(this.propertyNamesToInject, "klass")));
+		protected override function methodBlock(method:FrameworkMethod) : IAsyncStatement {
+			/* Ideal setup
+			var testSequence : StatementSequencer = super.methodBlock( method ) as StatementSequencer;
 			
-            //trace('[mock-as3] MockRunner.classBlock classes', classes.join(', '));
-
-			//create sequence where mockery is injected and classes are prepared 
-			var sequencer:StatementSequencer = new StatementSequencer();
-			sequencer.addStep(new PrepareMockery(this.mockery, classes));
-			sequencer.addStep(super.classBlock(notifier));
-
-			return sequencer;
-		}
-		
-		/**
-		 * Overriden from parent to implement hook to run mockery and mock injection before [Before] and verify after [After]
-		 */
-		protected override function methodBlock(method : FrameworkMethod) : IAsyncStatement {
-			//copy/paste of methodBlock from parent
-			//we need a shared instance of the test class to inject the properties, so we can't call super since it doesn't provide a handle
-			var test : Object = null;
+			testSequence.addFirstStep(new InjectMocks(this.mockery, propertyNamesToInject, target));
+			testSequence.addFirstStep(new InjectMockery(this.mockery, mockeryFieldName, target));
+			testSequence.addStep(new VerifyMocks(method, this.mockery, propertiesToVerify, target));
 			
+			return testSequence; */
+			
+			//COPY/PASTE FROM PARENT to supplement runner until refactor
+			var c:Class;
+			
+			var test:Object;
+			//might need to be reflective at some point
 			try {
 				test = createTest();
-			} 
-			catch (e : Error) {
-				trace(e.getStackTrace());
+			} catch ( e:Error ) {
+				trace( e.getStackTrace() );
 				return new Fail(e);
 			}
 			
 			var sequencer:StatementSequencer = new StatementSequencer();
-			//inject mockery and mocks before any befores executes
-			sequencer.addStep(new InjectMockery(mockery, mockeryFieldName, test));
+			
+			sequencer.addStep(new InjectMockery(this.mockery, mockeryFieldName, test));
 			sequencer.addStep(new InjectMocks(this.mockery, propertyNamesToInject, test));
 			
-			//flow from base class
-			sequencer.addStep(withBefores(method, test));
-			sequencer.addStep(withDecoration(method, test ));
-			sequencer.addStep(withAfters(method, test));
-
+			sequencer.addStep( withBefores( method, test) );
+			sequencer.addStep( withDecoration( method, test ) );
+			sequencer.addStep( withAfters( method, test ) );
+			
 			//verify mocks after all afters executes
 			var propertiesToVerify : Array = pluck(this.propertyNamesToInject, "name");
-			
 			sequencer.addStep(new VerifyMocks(method, this.mockery, propertiesToVerify, test));
 			
 			return sequencer;
+		}
+		
+		/**
+		 * Overriden from parent to setup beforeClass sequence to include mock class preparation
+		 */
+		protected override function withBeforeClasses() : IAsyncStatement {
+			//build array of all class types to prepare
+			var classes : Array = compact(unique(pluck(this.propertyNamesToInject, "klass")));
+			
+			var beforeClasses : RunBeforesClass = super.withBeforeClasses() as RunBeforesClass;
+			beforeClasses.addFirstStep(new PrepareMockery(this.mockery, classes));
+			return beforeClasses;
 		}
 	}
 }

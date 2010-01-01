@@ -29,6 +29,7 @@ package com.anywebcam.mock.runner
 		public function evaluate(parentToken : AsyncTestToken) : void {
 			if (classesToPrepare.length == 0) {
 				parentToken.sendResult(null);
+				return;
 			}
 			
 			var timer : Timer = new Timer(TIMEOUT);
@@ -40,10 +41,12 @@ package com.anywebcam.mock.runner
 			mockery.prepare(classesToPrepare);
 			
 			mockery.addEventListener(Event.COMPLETE, function(event : Event) : void {
+					timer.stop()
 					parentToken.sendResult(null);
 				});
 			
 			mockery.addEventListener(ErrorEvent.ERROR, function(event : ErrorEvent) : void{
+					timer.stop();
 					parentToken.sendResult(new InitializationError(event.text));
 				});
 		}

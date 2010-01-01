@@ -19,7 +19,6 @@ package com.anywebcam.mock.runner
 
 		public function evaluate(parentToken:AsyncTestToken) : void {
 			//find mockery and inject
-            //trace("[mock-as3] Injecting [" + mockeryFieldName + "]");
 			target[mockeryFieldName] = mockery;
 			
 			parentToken.sendResult(null);

@@ -14,7 +14,7 @@ package com.anywebcam.mock
     {
         public var mockery:Mockery;
         
-        [Mock(type="nice")]
+        [Mock]
         public var nicelyImplicitlyInjected:Example;
         
         [Mock(type="strict")]
@@ -75,7 +75,7 @@ package com.anywebcam.mock
         {
             var expected:String = "how long is a piece of string";
             
-            mockery.mock(strictlyImplicitlyInjected).method("giveString").withNoArgs.returns(expected).once;
+            mockery.mock(strictlyImplicitlyInjected).method("giveString").withNoArgs.returns(expected).twice;
             
             assertThat(strictlyImplicitlyInjected.giveString(), equalTo(expected));
         }       

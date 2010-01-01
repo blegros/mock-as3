@@ -38,14 +38,7 @@ package com.anywebcam.mock.runner
 						mock = mockery.nice(property["klass"]); 
 					}
 					
-                    //trace(substitute("[mock-as3] Injecting '{}'={} {}", 
-                    //    property["name"], mock, mockery.mock(mock)));
-					    
 					target[property["name"]] = mock as property["klass"];
-				}
-				else
-				{
-                    //trace(substitute("[mock-as3] Skipping  '{}'", property["name"]));
 				}
 			}
 			
