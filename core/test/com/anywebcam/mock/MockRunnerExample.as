@@ -75,7 +75,7 @@ package com.anywebcam.mock
         {
             var expected:String = "how long is a piece of string";
             
-            mockery.mock(strictlyImplicitlyInjected).method("giveString").withNoArgs.returns(expected).twice;
+            mockery.mock(strictlyImplicitlyInjected).method("giveString").withNoArgs.returns(expected).once;
             
             assertThat(strictlyImplicitlyInjected.giveString(), equalTo(expected));
         }       
