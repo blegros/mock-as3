@@ -13,8 +13,6 @@ package com.anywebcam.mock.runner
     import org.flexunit.internals.runners.InitializationError;
     import org.flexunit.internals.runners.statements.Fail;
     import org.flexunit.internals.runners.statements.IAsyncStatement;
-    import org.flexunit.internals.runners.statements.RunAfters;
-    import org.flexunit.internals.runners.statements.RunBefores;
     import org.flexunit.internals.runners.statements.RunBeforesClass;
     import org.flexunit.internals.runners.statements.StatementSequencer;
     import org.flexunit.runners.BlockFlexUnit4ClassRunner;
@@ -153,8 +151,12 @@ package com.anywebcam.mock.runner
 			var classes : Array = compact(unique(pluck(this.propertyNamesToInject, "klass")));
 			
 			var beforeClasses : RunBeforesClass = super.withBeforeClasses() as RunBeforesClass;
-			beforeClasses.addFirstStep(new PrepareMockery(this.mockery, classes));
-			return beforeClasses;
+			
+			var newBeforeClasses : StatementSequencer = new StatementSequencer();
+			newBeforeClasses.addStep(new PrepareMockery(this.mockery, classes));
+			newBeforeClasses.addStep(beforeClasses);
+			
+			return newBeforeClasses;
 		}
 	}
 }
