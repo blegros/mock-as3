@@ -12,6 +12,7 @@
 		    import com.anywebcam.mock.runner.*;
 		    
             import org.flexunit.listeners.UIListener;
+           import org.flexunit.listeners.CIListener;
             import org.flexunit.runner.FlexUnitCore;
 
             private var core:FlexUnitCore;
@@ -23,6 +24,7 @@
             {
                 core = new FlexUnitCore();
                 core.addListener(new UIListener(uiListener));
+                core.addListener(new CIListener());
                 core.run(
                     MockFrameworkTest, 
                     MockRunnerExample,
