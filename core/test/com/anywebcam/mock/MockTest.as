@@ -307,9 +307,44 @@ package com.anywebcam.mock
 			{
 				assertEquals(
 					'Verifying Mock Failed: EventDispatcher\n'
-					+ 'Unmet Expectation: EventDispatcher.one("one") received: 0, expected: 1 (-1)\n'
-					+ 'Unmet Expectation: EventDispatcher.two(2) received: 0, expected: 1 (-1)\n'
-					+ 'Unmet Expectation: EventDispatcher.three(true) received: 0, expected: 1 (-1)',
+					+ 'Unmet Expectation: call one("one") received: 0, expected: 1 (-1)\n'
+					+ 'Unmet Expectation: call two(2) received: 0, expected: 1 (-1)\n'
+					+ 'Unmet Expectation: call three(true) received: 0, expected: 1 (-1)'
+					+ '\nActual Invocations:\n'
+					+ 'None',
+					error.message);
+			}
+		}
+		
+		public function testMockVerifyAggregatesFailedExpectationsWithInvocations():void
+		{
+			mock = new Mock( new EventDispatcher(), true );
+			mock.method('one').withArgs('one').once;
+			mock.method('two').withArgs(2).once;
+			mock.method('three').withArgs(true).once;
+			
+			try
+			{
+				mock.unicorn();
+				mock.unicorn(1, true, "test");
+				mock.troll = 11;
+				mock.leprechaun;
+				
+				mock.verify();
+				fail('Expecting MockExpectationError');
+			}
+			catch( error:MockExpectationError )
+			{
+				assertEquals(
+					'Verifying Mock Failed: EventDispatcher\n'
+					+ 'Unmet Expectation: call one("one") received: 0, expected: 1 (-1)\n'
+					+ 'Unmet Expectation: call two(2) received: 0, expected: 1 (-1)\n'
+					+ 'Unmet Expectation: call three(true) received: 0, expected: 1 (-1)'
+					+ '\nActual Invocations:\n'
+					+ 'call unicorn()\n'
+					+ 'call unicorn(1, true, "test")\n'
+					+ 'set troll = 11\n'
+					+ 'get leprechaun',
 					error.message);
 			}
 		}

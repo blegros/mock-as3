@@ -28,7 +28,7 @@ package com.anywebcam.mock
 		}
 		
 		public var mock	:Mock;
-		public var e		:MockExpectation;
+		public var e :MockExpectation;
 		
 		override public function setUp():void
 		{
@@ -45,25 +45,31 @@ package com.anywebcam.mock
 		// setting method expectations
 		public function testShouldSetMethodExpectation():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', true);
+			
 			e.method('testMethod').once;
-			e.invoke( true );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 		
 		public function testMethodExpectationShouldOverridePropertyExpectationIfSetAfterwards():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', true);
+			
 			e.property('donuts');
 			e.method('testMethod').once;
-			e.invoke( true );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 		
 		public function testMethodExpectationShouldFailIfCalledAsProperty():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', false);
+			
 			try
 			{
 				e.method('testMethod').once;
-				e.invoke( false );
+				e.invoke( invocation );
 				fail( 'Expecting invoking the MockExpectation as property to throw an error' );
 			}
 			catch( error:MockExpectationError )
@@ -76,17 +82,21 @@ package com.anywebcam.mock
 		// method arguments
 		public function testMethodExpectationShouldAcceptNoArgumentsAndVerifyIfInvokedWithNoArguments():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', true);
+			
 			e.method('testMethod').withNoArgs;
-			e.invoke( true );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 
 		public function testMethodExpectationShouldAcceptNoArgumentsAndFailVerifyIfInvokedWithArguments():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', true, [1, 2, 3]);
+			
 			try
 			{
 				e.method('testMethod').once.withNoArgs;
-				e.invoke( true, [1, 2, 3] );
+				e.invoke( invocation );
 				
 				fail( 'Expecting invocation with arguments to throw an error' );
 			}
@@ -99,41 +109,51 @@ package com.anywebcam.mock
 
 		public function testMethodExpectationShouldVerifyWithNoArgsWhenSetToAcceptAnyArguments():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', true);
+			
 			e.method('testMethod').withAnyArgs;
 			
-			e.invoke( true );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 
 		public function testMethodExpectationShouldVerifyWithNullWhenSetToAcceptAnyArguments():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', true, null);
+			
 			e.method('testMethod').withAnyArgs;
 			
-			e.invoke( true, null );
+			e.invoke( invocation );
 			assertTrue( e.verify() );						
 		}
 
 		public function testMethodExpectationShouldVerifyWithAnyArgsWhenSetToAcceptAnyArguments():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', true, [1, 2, 3, 4]);
+			
 			e.method('testMethod').withAnyArgs;
 						
-			e.invoke( true, [1, 2, 3, 4] );
+			e.invoke( invocation );
 			assertTrue( e.verify() );			
 		}
 		
 		public function testMethodExpectationShouldAcceptSpecificArgumentsAndVerityIfInvokeWithCorrectArguments():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', true, [1, true, 'test']);
+			
 			e.method('testMethod').withArgs( Number, Boolean, String );
-			e.invoke( true, [1, true, 'test'] );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 		
 		public function testMethodExpectationShouldAcceptSpecificArgumentsAndFailVerifyIfInvokedWithIncorrectArguments():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', true, ['toast', 'crumpets', false]);
+			
 			try
 			{
 				e.method('testMethod').withArgs( Number, Boolean, String );
-				e.invoke( true, ['toast', 'crumpets', false] );
+				e.invoke( invocation );
 				fail( 'Expecting invocation with incorrect arguments to throw an error' );
 			}
 			catch( error:MockExpectationError )
@@ -145,17 +165,21 @@ package com.anywebcam.mock
 		
 		public function testMethodExpectationShouldAcceptSingleLiteralValue():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', true, [1]);
+			
 			e.method('icanhasone').withArgs( 1 );
-			e.invoke( true, [1] );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 		
 		public function testMethodExpectationShouldAcceptSingleLiteralValueAndFailVerifyIfInvokedWithIncorrectArguments():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testMethod', true, [0]);
+			
 			try
 			{
 				e.method('icanhasone').withArgs( 1 );
-				e.invoke(true, [0]);
+				e.invoke(invocation);
 				fail( 'Expecting invocation with incorrect arguments to throw an error' );
 			}
 			catch( error:MockExpectationError )
@@ -168,33 +192,41 @@ package com.anywebcam.mock
 		// setting property expectations
 		public function testShouldSetPropertyExpectation():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testProperty', false);
+			
 			e.property('testProperty');
-			e.invoke( false );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 		
 		public function testPropertyExpectationShouldOverrideMethodExpectationIfSetAfterwards():void
 		{
+			var invocation : MockInvocation = new MockInvocation('donuts', false);
+			
 			e.method('toast');
 			e.property('donuts');
 			assertEquals( 'donuts', e.name );
-			e.invoke( false );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 		
 		public function testPropertyExpectationShouldVerifyWithCorrectArgument():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testProperty', false, ['hello']);
+			
 			e.property('testProperty').withArgs( String );
-			e.invoke( false, ['hello'] );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 		
 		public function testPropertyExpectationShouldFailToVerifyWithIncorrectArgument():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testProperty', false, [4]);
+			
 			try
 			{
 				e.property('testProperty').withArgs( String );
-				e.invoke( false, [4] );
+				e.invoke( invocation );
 				fail( 'Expecting invocation with incorrect arguments to throw an error' );
 			}
 			catch( error:MockExpectationError )
@@ -220,10 +252,12 @@ package com.anywebcam.mock
 		
 		public function testPropertyExpectationShouldFailToVerifyIfInvokedWithMultipleArguments():void
 		{
+			var invocation : MockInvocation = new MockInvocation('testProperty', false, ['hello', 'world']);
+			
 			try
 			{
 				e.property('testProperty').withArgs( String );
-				e.invoke( false, ['hello', 'world'] );
+				e.invoke( invocation );
 				fail( 'Expecting invocation of property with multiple arguments to throw an error' );
 			}
 			catch( error:MockExpectationError )
@@ -236,26 +270,32 @@ package com.anywebcam.mock
 		// settings return values
 		public function testShouldSetReturnValuesOverridesPreviouslySetThrowError():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			e.method('test').andThrow( new Error('NotToBeThrown') ).andReturn( true );
-			var retval:* = e.invoke( true );
+			var retval:* = e.invoke( invocation );
 			assertEquals( true, retval );
 		}
 		
 		public function testShouldSetReturnValueAndReturnItOnInvoke():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			e.method('test').andReturn( true );
-			var retval:* = e.invoke( true );
+			var retval:* = e.invoke( invocation );
 			assertEquals( true, retval );
 		}
 		
 		public function testShouldSetMulitpleReturnValuesAndReturnValuesInSetSequence():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			e.method('test').andReturn( 1, 1, 2, 3, 5, 8 );
 
 			var expectedValues:Array = [1, 1, 2, 3, 5, 8 ];
 			expectedValues.forEach( function( v:Number, i:int, a:Array ):void
 			{
-				assertTrue( v, e.invoke( true ) );
+				assertTrue( v, e.invoke( invocation ) );
 			});
 			
 			assertTrue( e.verify() );
@@ -263,12 +303,14 @@ package com.anywebcam.mock
 		
 		public function testShouldReturnValuesSequentiallyThenRepeatLastValueForAllSubsequentInvocations():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			e.method('test').andReturn( 'the good', 'the bad', 'the ugly' );
 
 			var expectedValues:Array = [ 'the good', 'the bad', 'the ugly', 'the ugly', 'the ugly' ];
 			expectedValues.forEach( function( v:String, i:int, a:Array ):void
 			{
-				assertEquals( v, e.invoke( true ) );
+				assertEquals( v, e.invoke( invocation ) );
 			});
 			
 			assertTrue( e.verify() );
@@ -277,10 +319,12 @@ package com.anywebcam.mock
 		// settings throw errors
 		public function testShouldSetThrowErrorOverridesPreviouslySetReturnValues():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			try
 			{
 				e.method('test').andReturn( 'dontReturnMe' ).andThrow( new Error('PleaseThrowMe') );
-				e.invoke( true );
+				e.invoke( invocation );
 				fail( 'Expecting the set throw error to be thrown' );
 			}
 			catch( error:Error )
@@ -291,10 +335,12 @@ package com.anywebcam.mock
 		
 		public function testShouldSetThrowErrorAndThrowErrorOnInvokeAndVerify():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			try
 			{
 				e.method('test').andThrow( new Error('ThrownByMockExpectation') );
-				e.invoke( true );
+				e.invoke( invocation );
 				fail( 'Expecting set error to be thrown on expectation invocation' );
 			}
 			catch( error:Error )
@@ -313,11 +359,13 @@ package com.anywebcam.mock
 		
 		public function testShouldVerifyIfReceiveCountIsAnyAndExpectationIsInvoked():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			e.method('test').anyNumberOfTimes;
-			e.invoke( true );
-			e.invoke( true );
-			e.invoke( true );
-			e.invoke( true );
+			e.invoke( invocation );
+			e.invoke( invocation );
+			e.invoke( invocation );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 		
@@ -329,11 +377,13 @@ package com.anywebcam.mock
 		
 		public function testShouldNotVerifyIfReceiveCountIsNeverAndExpectationIsInvoked():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			e.method('test').never;
 			
 			try
 			{
-				e.invoke( true );
+				e.invoke( invocation );
 				fail('Expecting MockExpectation#invoke to throw a MockExpectationError');
 			}
 			catch( error:MockExpectationError )
@@ -345,19 +395,23 @@ package com.anywebcam.mock
 		// invoke exactly
 		public function testShouldVerifyIfReceiveCountIsExactlyAndInvokedCorrectNumberOfTimes():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			e.method('test').exactly( 3 );
-			e.invoke( true );
-			e.invoke( true );
-			e.invoke( true );
+			e.invoke( invocation );
+			e.invoke( invocation );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 		
 		public function testShouldNotVerifyIfReceiveCountIsExactlyAndNotInvokedCorrectNumberOfTimes():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			e.method('test').exactly( 1 );
-			e.invoke( true );
-			e.invoke( true );
-			e.invoke( true );
+			e.invoke( invocation );
+			e.invoke( invocation );
+			e.invoke( invocation );
 			try 
 			{
 				e.verify();
@@ -372,39 +426,43 @@ package com.anywebcam.mock
 		// invoked less than, and more than
 		public function testShouldVerifyIfReceiveCountIsAtLeast():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			e.method('test').atLeast( 3 );
 			
-			e.invoke( true );
+			e.invoke( invocation );
 			try { e.verify(); fail('Expecting MockExpectationError'); } 
 			catch (error:MockExpectationError) { ;/* NOOP */ }
 			
-			e.invoke( true );
+			e.invoke( invocation );
 			try { e.verify(); fail('Expecting MockExpectationError'); } 
 			catch (error:MockExpectationError) { ;/* NOOP */ }
 			
-			e.invoke( true );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 
-			e.invoke( true );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 		}
 		
 		// invoked less than, and more than
 		public function testShouldVerifyIfReceiveCountIsAtMost():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			e.method('test').atMost( 2 );
 			
-			e.invoke( true );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 			
-			e.invoke( true );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 			
-			e.invoke( true );
+			e.invoke( invocation );
 			try { e.verify(); fail('Expecting MockExpectationError'); } 
 			catch (error:MockExpectationError) { ;/* NOOP */ }
 
-			e.invoke( true );
+			e.invoke( invocation );
 			try { e.verify(); fail('Expecting MockExpectationError'); } 
 			catch (error:MockExpectationError) { ;/* NOOP */ }
 		}
@@ -412,19 +470,21 @@ package com.anywebcam.mock
 		// at least, at most, at least & at most
 		public function testShouldVerifyIfReceiveCountIsAtLeastAndAtMost():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true);
+			
 			e.method('test').atLeast( 2 ).atMost( 3 );
 			
-			e.invoke( true );
+			e.invoke( invocation );
 			try { e.verify(); fail('Expecting MockExpectationError'); } 
 			catch (error:MockExpectationError) { ;/* NOOP */ }
 
-			e.invoke( true );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 
-			e.invoke( true );
+			e.invoke( invocation );
 			assertTrue( e.verify() );
 
-			e.invoke( true );
+			e.invoke( invocation );
 			try { e.verify(); fail('Expecting MockExpectationError'); } 
 			catch (error:MockExpectationError) { ;/* NOOP */ }
 		}
@@ -475,9 +535,10 @@ package com.anywebcam.mock
 		public function testShouldSetFunctionToInvokeOnInvokingExpectation():void
 		{
 			var invoked:int = 0;
+			var invocation : MockInvocation = new MockInvocation('test', true);
 			
 			e.method('test').andCall( function():void { invoked++; });
-			e.invoke( true );
+			e.invoke( invocation );
 			
 			assertEquals( 1, invoked );
 		}
@@ -485,6 +546,7 @@ package com.anywebcam.mock
 		public function testShouldSetMultipleFunctionsToInvokeInvokingExpectation():void
 		{
 			var invoked:int = 0;
+			var invocation : MockInvocation = new MockInvocation('test', true);
 			
 			e.method('test')
 				.andCall( function():void { invoked++; } )
@@ -492,13 +554,15 @@ package com.anywebcam.mock
 				.andCall( function(args:Array=null):void { invoked++; } )
 				.andCall( function(args:Array=null):void { invoked++; } );
 
-			e.invoke( true );
+			e.invoke( invocation );
 			
 			assertEquals( 4, invoked );
 		}
 		
 		public function testFunctionsToCallShouldReceiveArgsFromInvoke():void
 		{
+			var invocation : MockInvocation = new MockInvocation('test', true, ['one', 2, true]);
+			
 			e.method('test').withAnyArgs.calls( function(...rest):void 
 			{  
 				assertEquals( 3, rest.length );
@@ -507,19 +571,20 @@ package com.anywebcam.mock
 				assertEquals( rest[2], true );
 			});
 			
-			e.invoke( true, ['one', 2, true] );
+			e.invoke( invocation );
 		}
 		
 		// dispatching events
 		public function testShouldSetEventToDispatchOnInvokingExpectation():void
 		{
 			var invoked:int = 0;
+			var invocation : MockInvocation = new MockInvocation('test', true);
 			/*var target:IEventDispatcher = mock.target as IEventDispatcher;*/
 			
 			mock.addEventListener( 'testEvent', function(e:Event):void { invoked++; } )
 			
 			e.method('test').andDispatchEvent( new Event('testEvent') );
-			e.invoke( true );
+			e.invoke( invocation );
 			
 			assertEquals( 1, invoked );
 		}
@@ -527,6 +592,7 @@ package com.anywebcam.mock
 		public function testShouldDispatchAllEventsSetOnExpectationWhenInvoked():void
 		{
 			var invoked:int = 0;
+			var invocation : MockInvocation = new MockInvocation('test', true);
 			/*var target:IEventDispatcher = mock.target as IEventDispatcher;*/
 			
 			mock.addEventListener( 'eventOne', function(e:Event):void { invoked++; } );
@@ -542,7 +608,7 @@ package com.anywebcam.mock
 				.dispatchesEvent( new Event('eventTwo') );
 			
 			// dispatches eventOne, and eventTwo
-			e.invoke( true );
+			e.invoke( invocation );
 			
 			// dispatch verify, which calls the function with assertEquals
 			mock.dispatchEvent( new Event('verify') );
@@ -555,14 +621,16 @@ package com.anywebcam.mock
 			fail();
 		}*/
 		
-		public function testUnmetReceiveCountExpectationsShouldHaveNiceErrorMessages():void {
+		public function testUnmetReceiveCountExpectationsShouldHaveNiceErrorMessages():void 
+		{
+			var invocation : MockInvocation = new MockInvocation('test', true, ["one", 2, true]);
 			
 			//e.method('test').withArgs(Boolean, Mock, function():void {}, "one", true, false, 3, Number, RegExp, /\d+/, String).once;
 			e.method('test').withArgs("one", 2, true).atLeast(1).atMost(2);
 			
-			e.invoke(true, ["one", 2, true]);
-			e.invoke(true, ["one", 2, true]);
-			e.invoke(true, ["one", 2, true]);
+			e.invoke(invocation);
+			e.invoke(invocation);
+			e.invoke(invocation);
 			
 			try 
 			{
@@ -572,7 +640,7 @@ package com.anywebcam.mock
 			catch( error:MockExpectationError ) 
 			{
 				assertEquals(
-					'Unmet Expectation: EventDispatcher.test("one", 2, true) received: 3, expected: atLeast: 1 (+2), atMost: 2 (+1)',
+					'Unmet Expectation: call test("one", 2, true) received: 3, expected: atLeast: 1 (+2), atMost: 2 (+1)',
 					error.message);
 			}
 		}

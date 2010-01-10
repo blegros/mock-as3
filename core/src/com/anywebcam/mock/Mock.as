@@ -10,9 +10,9 @@ package com.anywebcam.mock
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.IEventDispatcher;
-	import flash.utils.getQualifiedClassName;
 	import flash.utils.Proxy;
 	import flash.utils.flash_proxy;
+	import flash.utils.getQualifiedClassName;
 
 	use namespace mock_internal;
 	
@@ -118,6 +118,7 @@ package com.anywebcam.mock
 		public function Mock( target:Object = null, ignoreMissing:Boolean = false, name:String=null )
 		{
 			_target = target;
+			_invocations = [];
 			_expectations = [];
 			_ignoreMissing = ignoreMissing || false;
 			_currentOrderNumber = 0;
@@ -180,7 +181,8 @@ package com.anywebcam.mock
 			_traceMissing = value;
 		}
 
-		private var _expectations:Array; //  of MockExpectation;
+		[ArrayElementType("com.anywebcam.mock.MockExpectation")]
+		private var _expectations:Array;
 		
 		/**
 		 * Array of Mock Expectations set on this Mock instance
@@ -191,6 +193,22 @@ package com.anywebcam.mock
 		{
 			return _expectations;
 		}
+		
+		[ArrayElementType("com.anywebcam.mock.MockInvocation")]
+		private var _invocations : Array;
+		
+		/**
+		 * Array of Mock Invocations executed against this Mock instance
+		 *	
+		 * @private
+		 */
+		public function get invocations():Array
+		{
+			return _invocations;
+		}
+		
+		[ArrayElementType("com.anywebcam.mock.MockExpectationError")]
+		private var _errors : Array;
 		
 		/**
 		 * Current Order
@@ -285,7 +303,14 @@ package com.anywebcam.mock
 					+ this.toString() + '\n' 
 					+ failedExpectations.map(function(error:MockExpectationError, i:int, a:Array):String {
 							return error.message;
-						}).join('\n') );
+						}).join('\n')
+					+ '\nActual Invocations:\n'
+					+ (invocations.length > 0 
+						? invocations.map(function(invocation:MockInvocation, i:int, a:Array):String {
+								return invocation.toString();
+							}).join('\n')
+						: 'None')
+				);
 
 			return expectationsAllVerified;
 		}
@@ -339,7 +364,7 @@ package com.anywebcam.mock
 		 */
 		public function invokeMethod( propertyName:String, args:Array = null):* 
 		{	
-			return findAndInvokeExpectation( propertyName, true, args );
+			return findAndInvokeExpectation( new MockInvocation( propertyName, true, args ) );
 		}
 		
 		/**
@@ -347,16 +372,18 @@ package com.anywebcam.mock
 		 *
 		 * @param propertyName The property or method name to find an expectation for
 		 * @param isMethod Indicates whether the expectation is for a method or a property
-	   * @param args An Array of arguments to the method or property setter
-	   * @private
+	     * @param args An Array of arguments to the method or property setter
+	     * @private
 		 */
-		protected function findAndInvokeExpectation( propertyName:String, isMethod:Boolean, args:Array = null ):*
+		protected function findAndInvokeExpectation( invocation : MockInvocation ):*
 		{
-			var expectation:MockExpectation = findMatchingExpectation( propertyName, isMethod, args );
+			invocations.push(invocation);
+			
+			var expectation:MockExpectation = findMatchingExpectation( invocation );
 			var result:* = null;
 			
 			if( expectation ) {
-				result = expectation.invoke( isMethod, args );
+				result = expectation.invoke( invocation );
 			}
 			
 			// todo: handle almost matching expectations?
@@ -373,11 +400,11 @@ package com.anywebcam.mock
 		 * @throw MockExpectationError if no expectation set and ignoreMissing is false 
 		 * @private
 		 */
-		protected function findMatchingExpectation( propertyName:String, isMethod:Boolean, args:Array = null ):MockExpectation
+		protected function findMatchingExpectation( invocation : MockInvocation ):MockExpectation
 		{
 			for each( var expectation:MockExpectation in _expectations )
 			{
-				if( expectation.matches( propertyName, isMethod, args ) && expectation.eligible() )
+				if( expectation.matches( invocation ) && expectation.eligible() )
 				{
 					return expectation;
 				}
@@ -385,7 +412,7 @@ package com.anywebcam.mock
 			
 			if( traceMissing )
 			{
-				trace( this, 'missing:', propertyName, args );
+				trace( this, 'missing:', invocation.propertyName, invocation.arguments );
 			}
 			
 			if( ! ignoreMissing ) 
@@ -393,8 +420,8 @@ package com.anywebcam.mock
 				// todo: handle almost matching expectations?
 				
 				throw new MockExpectationError( 'No Expectation set: '
-					+ toString() + '.' + propertyName 
-					+ (isMethod ? '(' + (args || []).join(',') + ')' : (args ? ' = ' + args : ''))
+					+ toString() + '.' + invocation.propertyName 
+					+ (invocation.isMethod ? '(' + (invocation.arguments || []).join(',') + ')' : (invocation.arguments ? ' = ' + invocation.arguments : ''))
 					);
 			}
 			
@@ -436,7 +463,7 @@ package com.anywebcam.mock
 		 */
 		override flash_proxy function callProperty( name:*, ...args ):*
 		{
-			return findAndInvokeExpectation( name, true, args );
+			return findAndInvokeExpectation( new MockInvocation( name, true, args ) );
 		}
 		
 		// property get requests
@@ -446,7 +473,7 @@ package com.anywebcam.mock
 		 */
 		override flash_proxy function getProperty( name:* ):*
 		{
-			return findAndInvokeExpectation( name, false );
+			return findAndInvokeExpectation( new MockInvocation( name, false ) );
 		}
 		
 		// property set requests
@@ -456,7 +483,7 @@ package com.anywebcam.mock
 		 */
 		override flash_proxy function setProperty( name:*, value:* ):void
 		{
-			findAndInvokeExpectation( name, false, [value] );
+			findAndInvokeExpectation( new MockInvocation( name, false, [value] ) );
 		}
 		
 		/**

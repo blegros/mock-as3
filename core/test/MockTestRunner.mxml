@@ -25,7 +25,8 @@
                 core.addListener(new UIListener(uiListener));
                 core.run(
                     MockFrameworkTest, 
-                    MockRunnerExample
+                    MockRunnerExample,
+					MockInvocationTest
                     );
             }
         ]]>

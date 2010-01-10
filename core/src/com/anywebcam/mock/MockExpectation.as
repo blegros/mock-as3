@@ -7,11 +7,11 @@
 */
 package com.anywebcam.mock
 {
+	import com.anywebcam.mock.receiveCountValidator.*;
+	
 	import flash.events.Event;
 	import flash.events.IEventDispatcher;
 	import flash.utils.setTimeout;
-
-	import com.anywebcam.mock.receiveCountValidator.*;
 
 	use namespace mock_internal;
 
@@ -23,33 +23,33 @@ package com.anywebcam.mock
 	 */
 	public class MockExpectation
 	{
-		private var _mock	:Mock;
+		private var _mock:Mock;
 		
-		private var _failedInvocation				:Boolean;
+		private var _failedInvocation:Boolean;
 		
 		// expectation type
-		private var _hasExpectationType			:Boolean;
-		private var _isMethodExpectation		:Boolean;
-		private var _propertyName						:String;
+		private var _hasExpectationType:Boolean;
+		private var _isMethodExpectation:Boolean;
+		private var _propertyName:String;
 		
 		// with arguments
-		private var _expectsArguments				:Boolean;
-		private var _argumentExpectation		:ArgumentExpectation;
+		private var _expectsArguments:Boolean;
+		private var _argumentExpectation:ArgumentExpectation;
 
 		// receive counts
-		private var _receivedCount					:int;
-		private var _receiveCountValidators	:Array;
+		private var _receivedCount:int;
+		private var _receiveCountValidators:Array;
 		
 		// return values
-		private var _valuesToYield					:Array;   
-		private var _errorToThrow						:Error;   
+		private var _valuesToYield:Array;   
+		private var _errorToThrow:Error;   
 
 		// functions and events
-		private var _funcsToInvoke					:Array; // of Function
-		private var _eventsToDispatch 			:Array; // of EventInfo
+		private var _funcsToInvoke:Array; // of Function
+		private var _eventsToDispatch:Array; // of EventInfo
 		
 		// ordering
-		private var _orderNumber						:Number;
+		private var _orderNumber:Number;
 
 		/**
 		 * Constructor
@@ -58,25 +58,28 @@ package com.anywebcam.mock
 		 */
 		public function MockExpectation( mock:Mock )
 		{
-			_mock 								= mock;
-			_hasExpectationType 	= false;
-			_isMethodExpectation 	= false;
-			_propertyName 				= '';
-			_receivedCount 				= 0;
+			_mock = mock;
+			_hasExpectationType = false;
+			_isMethodExpectation = false;
+			_propertyName = '';
+			_receivedCount = 0;
 			_receiveCountValidators = [];
-			_expectsArguments			= false;
-			_orderNumber					= NaN;
+			_expectsArguments = false;
+			_orderNumber = NaN;
 			
-			_funcsToInvoke 				= [];
-			_eventsToDispatch 		= [];
+			_funcsToInvoke = [];
+			_eventsToDispatch = [];
 		}
 		
 		public function toString():String 
 		{
- 			var result:String = _mock.toString() + '.' + name
+			var invocation : String = _isMethodExpectation ? "call" : (!_expectsArguments ? "get" : "set");
+			
+ 			var result:String = invocation + ' ' 
+					+ name
 					+ (_isMethodExpectation 
-						? '(' + (_expectsArguments ? _argumentExpectation.toString() : '') + ')' 
-						: '');
+						? ('(' + (_expectsArguments ? _argumentExpectation.toString() : '') + ')') 
+						: (_expectsArguments ? (' = ' + _argumentExpectation.toString()) : ''));
 						
 			return result;
 		}
@@ -106,11 +109,11 @@ package com.anywebcam.mock
 		 * @param args
 		 * @private
 		 */
-		mock_internal function matches( propertyName:String, isMethod:Boolean, args:Array = null ):Boolean
+		mock_internal function matches( invocation : MockInvocation ):Boolean
 		{
-			return propertyName == _propertyName 
-				&& isMethod == _isMethodExpectation 
-				&& ((_argumentExpectation && _argumentExpectation.argumentsMatch( args ))
+			return invocation.propertyName == _propertyName 
+				&& invocation.isMethod == _isMethodExpectation 
+				&& ((_argumentExpectation && _argumentExpectation.argumentsMatch( invocation.arguments ))
 					|| (_argumentExpectation == null));
 		}
 		
@@ -139,18 +142,18 @@ package com.anywebcam.mock
 		 * @throws MockExpectationError if invoked as a property and is a method
 		 * @throws MockExpectationError if args do not match
 		 */
-		mock_internal function invoke( invokedAsMethod:Boolean, args:Array = null ):*
+		mock_internal function invoke( invocation : MockInvocation ):*
 		{
 			_failedInvocation = false;
 
 			try
 			{
-				checkInvocationMethod( invokedAsMethod );
-				checkInvocationArgs( args );
+				checkInvocationMethod( invocation.isMethod );
+				checkInvocationArgs( invocation.arguments );
 				checkInvocationOrder();
 				checkInvocationReceiveCounts();
 				
-				var retval:* = doInvoke( args );
+				var retval:* = doInvoke( invocation.arguments );
 				
 				return retval;
 			}
