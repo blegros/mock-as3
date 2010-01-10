@@ -1,20 +1,16 @@
 package com.anywebcam.mock
 {
-    import asx.array.compact;    
+    import asx.array.compact;
     import asx.array.flatten;
     
-    import org.floxy.IInterceptor;
-    import org.floxy.IInvocation;  
-    import org.floxy.IProxyRepository;
-    import org.floxy.ProxyRepository;
-
-    import com.anywebcam.mock.Mock;
-
     import flash.events.Event;
     import flash.events.EventDispatcher;
     import flash.events.IEventDispatcher;
     import flash.system.ApplicationDomain;
     import flash.utils.Dictionary;
+    
+    import org.floxy.IProxyRepository;
+    import org.floxy.ProxyRepository;
 
     public class Mockery extends EventDispatcher
     {
@@ -69,8 +65,10 @@ package com.anywebcam.mock
             return mocksByTarget[target] as Mock;
         }
 
-        public function verify(... targets):void
+        public function verify(targets : Array):void
         {
+			var errors : Array = [];
+			
             targets = compact(flatten(targets));
             
             for each (var target:Object in targets)
@@ -78,9 +76,30 @@ package com.anywebcam.mock
                 var mock:Mock = mocksByTarget[target] as Mock;
                 if (mock)
                 {
-                    mock.verify();
+					try
+					{
+						mock.verify();
+					}
+					catch(error : MockExpectationError)
+					{
+						errors.push(error);
+					}
                 }
             }
+			
+			if(errors.length > 0)
+			{
+				var message : String = errors.map( function( item:MockExpectationError, index:int, array:Array) : String {
+						return item.message;
+					}).join("\n\n");
+				
+				throw new MockExpectationError(message);
+			}
         }
+		
+		public function reset() : void
+		{
+			mocksByTarget = new Dictionary();
+		}
     }
 }
